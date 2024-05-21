@@ -1,0 +1,9 @@
+.DS_Store
+.bsp/
+.idea/
+mainProject/
+project/
+target/
+.metals 
+.vscode  
+..
