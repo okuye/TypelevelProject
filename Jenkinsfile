@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        PROJECT_DIR = 'path/to/project' // Update this to the correct path of your project
+        PROJECT_DIR = '.' // Root directory of the project
     }
     stages {
         stage('Compile') {
@@ -52,7 +52,7 @@ pipeline {
         }
         stage('Deploy to Production') {
             when {
-                branch 'master'
+                branch 'main'
             }
             steps {
                 script {
