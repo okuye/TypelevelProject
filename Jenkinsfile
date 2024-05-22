@@ -1,22 +1,31 @@
 pipeline {
     agent any
+    environment {
+        PROJECT_DIR = 'path/to/project' // Update this to the correct path of your project
+    }
     stages {
         stage('Compile') {
             steps {
-                // Execute the build target from the Makefile
-                sh 'make build'
+                dir("${env.PROJECT_DIR}") {
+                    // Execute the build target from the Makefile
+                    sh 'make build'
+                }
             }
         }
         stage('Run Tests') {
             steps {
-                // Execute the test target from the Makefile
-                sh 'make test'
+                dir("${env.PROJECT_DIR}") {
+                    // Execute the test target from the Makefile
+                    sh 'make test'
+                }
             }
         }
         stage('Deploy to Dev') {
             steps {
-                sh 'chmod +x deploy.sh'
-                sh 'make deploy ENV=dev'
+                dir("${env.PROJECT_DIR}") {
+                    sh 'chmod +x deploy.sh'
+                    sh 'make deploy ENV=dev'
+                }
             }
         }
         stage('Deploy to Staging') {
@@ -24,8 +33,10 @@ pipeline {
                 branch 'staging'
             }
             steps {
-                sh 'chmod +x deploy.sh'
-                sh 'make deploy ENV=staging'
+                dir("${env.PROJECT_DIR}") {
+                    sh 'chmod +x deploy.sh'
+                    sh 'make deploy ENV=staging'
+                }
             }
         }
         stage('Deploy to QA') {
@@ -33,8 +44,10 @@ pipeline {
                 branch 'QA'
             }
             steps {
-                sh 'chmod +x deploy.sh'
-                sh 'make deploy ENV=qa'
+                dir("${env.PROJECT_DIR}") {
+                    sh 'chmod +x deploy.sh'
+                    sh 'make deploy ENV=qa'
+                }
             }
         }
         stage('Deploy to Production') {
@@ -45,8 +58,10 @@ pipeline {
                 script {
                     def userInput = input(id: 'DeployToProd', message: 'Deploy to Production?', parameters: [choice(name: 'Proceed?', choices: 'Yes\nNo', description: 'Choose Yes to deploy to Production')])
                     if (userInput == 'Yes') {
-                        sh 'chmod +x deploy.sh'
-                        sh 'make deploy ENV=production'
+                        dir("${env.PROJECT_DIR}") {
+                            sh 'chmod +x deploy.sh'
+                            sh 'make deploy ENV=production'
+                        }
                     } else {
                         echo 'Deployment to Production was not approved'
                     }
