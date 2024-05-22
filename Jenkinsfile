@@ -7,7 +7,6 @@ pipeline {
         stage('Compile') {
             steps {
                 dir("${env.PROJECT_DIR}") {
-                    // Execute the build target from the Makefile
                     sh 'make build'
                 }
             }
@@ -15,7 +14,6 @@ pipeline {
         stage('Run Tests') {
             steps {
                 dir("${env.PROJECT_DIR}") {
-                    // Execute the test target from the Makefile
                     sh 'make test'
                 }
             }
