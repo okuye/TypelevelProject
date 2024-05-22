@@ -69,10 +69,10 @@ pipeline {
     }
     post {
         success {
-            mail to: 'olakuye@gmail.com', subject: 'Build Successful', body: 'Deployment complete.'
+            mail to: 'olakuye@gmail.com', subject: 'Built Successfully dude', body: 'Deployment complete.'
         }
         failure {
-            mail to: 'olakuye@gmail.com', subject: 'Build Failed', body: 'Check the logs.'
+            mail to: 'olakuye@gmail.com', subject: 'Build Failed again man', body: 'Check the logs.'
         }
     }
 }
