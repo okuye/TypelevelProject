@@ -69,10 +69,10 @@ pipeline {
     }
     post {
         success {
-            mail to: 'olakuye@gmail.com', subject: 'Built Successfully dude', body: 'Deployment complete.'
+            slackSend(channel: '#typelevel-job-board', message: "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
         }
         failure {
-            mail to: 'olakuye@gmail.com', subject: 'Build Failed again man', body: 'Check the logs.'
+            slackSend(channel: '#typelevel-job-board', message: "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
         }
     }
 }
