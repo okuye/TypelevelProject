@@ -3,24 +3,20 @@ pipeline {
     stages {
         stage('Compile') {
             steps {
-                // Change to the directory containing the Makefile if necessary
-                dir('path/to/Makefile') {
-                    sh 'make build'
-                }
+                // Execute the build target from the Makefile
+                sh 'make build'
             }
         }
         stage('Run Tests') {
             steps {
-                // Change to the directory containing the Makefile if necessary
-                dir('path/to/Makefile') {
-                    sh 'make test'
-                }
+                // Execute the test target from the Makefile
+                sh 'make test'
             }
         }
         stage('Deploy to Dev') {
             steps {
                 sh 'chmod +x deploy.sh'
-                sh './deploy.sh dev'
+                sh 'make deploy ENV=dev'
             }
         }
         stage('Deploy to Staging') {
@@ -29,7 +25,7 @@ pipeline {
             }
             steps {
                 sh 'chmod +x deploy.sh'
-                sh './deploy.sh staging'
+                sh 'make deploy ENV=staging'
             }
         }
         stage('Deploy to QA') {
@@ -38,7 +34,7 @@ pipeline {
             }
             steps {
                 sh 'chmod +x deploy.sh'
-                sh './deploy.sh qa'
+                sh 'make deploy ENV=qa'
             }
         }
         stage('Deploy to Production') {
@@ -50,7 +46,7 @@ pipeline {
                     def userInput = input(id: 'DeployToProd', message: 'Deploy to Production?', parameters: [choice(name: 'Proceed?', choices: 'Yes\nNo', description: 'Choose Yes to deploy to Production')])
                     if (userInput == 'Yes') {
                         sh 'chmod +x deploy.sh'
-                        sh './deploy.sh production'
+                        sh 'make deploy ENV=production'
                     } else {
                         echo 'Deployment to Production was not approved'
                     }

@@ -36,14 +36,17 @@ deploy_to_env() {
 
     # 2. Build the application (if required)
     echo "Building the application for $ENV"
-    # Example build command, adjust as needed
-    make build
+    sbt clean compile
 
-    # 3. Copy files to the deployment directory
+    # 3. Package the application
+    echo "Packaging the application for $ENV"
+    sbt package
+
+    # 4. Copy files to the deployment directory
     echo "Copying files to $DEPLOY_DIR"
-    rsync -av --exclude='.git' ./ $DEPLOY_DIR
+    rsync -av --exclude='.git' target/scala-3.3.1/typelevel-project_3-0.1.0-SNAPSHOT.jar $DEPLOY_DIR
 
-    # 4. Restart the service (if required)
+    # 5. Restart the service (if required)
     echo "Restarting services for $ENV"
     # Example restart command, adjust as needed
     systemctl restart myapp-$ENV
