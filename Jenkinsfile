@@ -3,12 +3,18 @@ pipeline {
     stages {
         stage('Compile') {
             steps {
-                sh 'make build'
+                // Change to the directory containing the Makefile if necessary
+                dir('path/to/Makefile') {
+                    sh 'make build'
+                }
             }
         }
         stage('Run Tests') {
             steps {
-                sh 'make test'
+                // Change to the directory containing the Makefile if necessary
+                dir('path/to/Makefile') {
+                    sh 'make test'
+                }
             }
         }
         stage('Deploy to Dev') {
@@ -54,10 +60,10 @@ pipeline {
     }
     post {
         success {
-            mail to: 'team@example.com', subject: 'Build Successful', body: 'Deployment complete.'
+            mail to: 'olakuye@gmail.com', subject: 'Build Successful', body: 'Deployment complete.'
         }
         failure {
-            mail to: 'team@example.com', subject: 'Build Failed', body: 'Check the logs.'
+            mail to: 'olakuye@gmail.com', subject: 'Build Failed', body: 'Check the logs.'
         }
     }
 }
