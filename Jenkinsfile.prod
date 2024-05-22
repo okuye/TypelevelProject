@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+    environment {
+        PROJECT_DIR = '.' // Root directory of the project
+    }
+    stages {
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    def userInput = input(id: 'DeployToProd', message: 'Deploy to Production?', parameters: [choice(name: 'Proceed?', choices: 'Yes\nNo', description: 'Choose Yes to deploy to Production')])
+                    if (userInput == 'Yes') {
+                        dir("${env.PROJECT_DIR}") {
+                            sh 'chmod +x deploy.sh'
+                            sh 'make deploy ENV=production'
+                        }
+                    } else {
+                        echo 'Deployment to Production was not approved'
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            slackSend(channel: '#typelevel-job-board', message: "Production Deployment Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
+        }
+        failure {
+            slackSend(channel: '#typelevel-job-board', message: "Production Deployment Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
+        }
+    }
+}
