@@ -21,6 +21,7 @@ trait Jobs [F[_]] {
   }
 
   /* 
+  dummy data
       id: UUID,
       date: Long,
       ownerEmail: String,
