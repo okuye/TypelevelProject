@@ -3,7 +3,7 @@ FROM ubuntu:latest
 
 # Update the package list and install dependencies
 RUN apt-get update && \
-    apt-get install -y openjdk-11-jdk wget gnupg2 ca-certificates git && \
+    apt-get install -y openjdk-11-jdk wget gnupg2 ca-certificates git make && \
     rm -rf /var/lib/apt/lists/*
 
 # Download Jenkins WAR file
