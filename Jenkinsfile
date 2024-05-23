@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        PROJECT_DIR = '.' // Root directory of the project
+        PROJECT_DIR = '.' // Root directory of the project ooo
         TELEGRAM_CHAT_ID = '6840647775'
         TELEGRAM_BOT_TOKEN = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
     }
