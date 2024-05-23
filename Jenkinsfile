@@ -2,6 +2,8 @@ pipeline {
     agent any
     environment {
         PROJECT_DIR = '.' // Root directory of the project
+        TELEGRAM_CHAT_ID = '6840647775'
+        TELEGRAM_BOT_TOKEN = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
     }
     stages {
         stage('Compile') {
@@ -51,10 +53,16 @@ pipeline {
     }
     post {
         success {
-            slackSend(channel: '#typelevel-job-board', message: "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
+            script {
+                def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+                sh "curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text=\"${message}\""
+            }
         }
         failure {
-            slackSend(channel: '#typelevel-job-board', message: "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
+            script {
+                def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+                sh "curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text=\"${message}\""
+            }
         }
     }
 }
