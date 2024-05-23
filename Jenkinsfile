@@ -1,8 +1,12 @@
 pipeline {
     agent any
+
     environment {
         PROJECT_DIR = '.' // Root directory of the project
+        TELEGRAM_CHAT_ID = '6840647775'
+        TELEGRAM_BOT_TOKEN = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
     }
+
     stages {
         stage('Compile') {
             steps {
@@ -49,17 +53,18 @@ pipeline {
             }
         }
     }
+
     post {
         success {
             script {
-                def telegramMessage = "Build Successful: ${env.JOB_NAME}/${env.BUILD_NUMBER}"
-                sh "curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text='${telegramMessage}'"
+                def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+                sh "curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text='${message}'"
             }
         }
         failure {
             script {
-                def telegramMessage = "Build Failed: ${env.JOB_NAME}/${env.BUILD_NUMBER}"
-                sh "curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text='${telegramMessage}'"
+                def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+                sh "curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text='${message}'"
             }
         }
     }
