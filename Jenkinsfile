@@ -2,8 +2,8 @@ pipeline {
     agent any
     parameters {
         booleanParam(name: 'DEPLOY_TO_DEV', defaultValue: true, description: 'Deploy to Dev')
-        booleanParam(name: 'DEPLOY_TO_STAGING', defaultValue: false, description: 'Deploy to Staging')
-        booleanParam(name: 'DEPLOY_TO_QA', defaultValue: false, description: 'Deploy to QA')
+        booleanParam(name: 'DEPLOY_TO_STAGING', defaultValue: true, description: 'Deploy to Staging')
+        booleanParam(name: 'DEPLOY_TO_QA', defaultValue: true, description: 'Deploy to QA')
     }
     environment {
         PROJECT_DIR = '.' // Root directory of the project
@@ -61,12 +61,14 @@ pipeline {
     }
     post {
         success {
-            slackSend(channel: '#typelevel-job-board', message: "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
-            sh 'curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text="Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"'
+            sh """
+            curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text="Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+            """
         }
         failure {
-            slackSend(channel: '#typelevel-job-board', message: "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
-            sh 'curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text="Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"'
+            sh """
+            curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${env.TELEGRAM_CHAT_ID} -d text="Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+            """
         }
     }
 }
