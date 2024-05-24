@@ -29,12 +29,6 @@ pipeline {
                 sh './deploy.sh qa'
             }
         }
-        stage('Deploy to Production') {
-            steps {
-                sh 'chmod +x deploy.sh'
-                sh './deploy.sh production'
-            }
-        }
     }
     post {
         success {
