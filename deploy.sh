@@ -8,19 +8,15 @@ deploy_to_env() {
     # Check which environment is being deployed to and set variables accordingly
     case $ENV in
         dev)
-            # Set environment-specific variables for Dev
             DEPLOY_DIR="/var/www/dev"
             ;;
         staging)
-            # Set environment-specific variables for Staging
             DEPLOY_DIR="/var/www/staging"
             ;;
         qa)
-            # Set environment-specific variables for QA
             DEPLOY_DIR="/var/www/qa"
             ;;
         production)
-            # Set environment-specific variables for Production
             DEPLOY_DIR="/var/www/production"
             ;;
         *)
@@ -29,27 +25,27 @@ deploy_to_env() {
             ;;
     esac
 
-    # Example deployment steps:
-    # 1. Pull the latest code
-    echo "Pulling the latest code for $ENV"
-    git pull origin $ENV
+    # Always pull from the main branch
+    echo "Pulling the latest code from the main branch for $ENV"
+    git checkout main
+    git pull origin main
 
-    # 2. Build the application (if required)
+    # Build the application (if required)
     echo "Building the application for $ENV"
     sbt clean compile
 
-    # 3. Package the application
+    # Package the application
     echo "Packaging the application for $ENV"
     sbt package
 
-    # 4. Copy files to the deployment directory
+    # Copy files to the deployment directory
     echo "Copying files to $DEPLOY_DIR"
     rsync -av --exclude='.git' target/scala-3.3.1/typelevel-project_3-0.1.0-SNAPSHOT.jar $DEPLOY_DIR
 
-    # 5. Restart the service (if required)
+    # Restart the service (this step might need adjustment based on your deployment environment)
     echo "Restarting services for $ENV"
-    # Example restart command, adjust as needed
-    systemctl restart myapp-$ENV
+    # Example restart command, adjust as needed or remove if not required
+    # systemctl restart myapp-$ENV
 
     echo "Deployment to $ENV environment completed"
 }
