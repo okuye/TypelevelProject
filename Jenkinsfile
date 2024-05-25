@@ -1,18 +1,32 @@
 pipeline {
     agent any
     environment {
-        GITHUB_TOKEN = credentials('github-token')  // Using the credentials ID
+        GITHUB_TOKEN = credentials('github-token')  // Use the credentials ID from Jenkins
     }
     stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    updateGithubStatus('Checkout', 'pending', 'Checking out the code...')
+                    try {
+                        checkout scm
+                        updateGithubStatus('Checkout', 'success', 'Code checked out successfully')
+                    } catch (Exception e) {
+                        updateGithubStatus('Checkout', 'failure', 'Checkout failed')
+                        throw e
+                    }
+                }
+            }
+        }
         stage('Compile') {
             steps {
                 script {
-                    updateGithubStatus('Compile', 'pending', 'Compiling...')
+                    updateGithubStatus('Compile', 'pending', 'Compiling the code...')
                     try {
                         sh 'make build'
-                        updateGithubStatus('Compile', 'success', 'Compile successful')
+                        updateGithubStatus('Compile', 'success', 'Compilation successful')
                     } catch (Exception e) {
-                        updateGithubStatus('Compile', 'failure', 'Compile failed')
+                        updateGithubStatus('Compile', 'failure', 'Compilation failed')
                         throw e
                     }
                 }
@@ -21,12 +35,12 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    updateGithubStatus('Run Tests', 'pending', 'Running tests...')
+                    updateGithubStatus('Tests', 'pending', 'Running tests...')
                     try {
                         sh 'make test'
-                        updateGithubStatus('Run Tests', 'success', 'Tests successful')
+                        updateGithubStatus('Tests', 'success', 'Tests passed')
                     } catch (Exception e) {
-                        updateGithubStatus('Run Tests', 'failure', 'Tests failed')
+                        updateGithubStatus('Tests', 'failure', 'Tests failed')
                         throw e
                     }
                 }
@@ -81,36 +95,36 @@ pipeline {
     post {
         success {
             script {
+                updateGithubStatus('Overall', 'success', 'Build and deploy successful')
                 def chat_id = '6840647775'
                 def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
                 def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
                 sh "curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage -d chat_id=${chat_id} -d text='${message}'"
-                updateGithubStatus('Overall', 'success', 'Build and deploy successful')
             }
         }
         failure {
             script {
+                updateGithubStatus('Overall', 'failure', 'Build or deploy failed')
                 def chat_id = '6840647775'
                 def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
                 def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
                 sh "curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage -d chat_id=${chat_id} -d text='${message}'"
-                updateGithubStatus('Overall', 'failure', 'Build or deploy failed')
             }
         }
     }
 }
 
-def updateGithubStatus(context, status, description) {
-    def commitSha = env.GIT_COMMIT ?: 'HEAD'
-    def repo = env.GIT_URL.split('/')[4].replaceAll('.git$', '')
+def updateGithubStatus(context, state, description) {
+    def repoName = env.GIT_URL.tokenize('/').last().replaceAll(/\.git$/, '')
+    def repoOwner = env.GIT_URL.tokenize('/')[3]
+    def commitSha = env.GIT_COMMIT
 
     sh """
-        curl -s -X POST \
-        -H "Authorization: token ${GITHUB_TOKEN}" \
+        curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
         -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/${repo}/statuses/${commitSha} \
+        https://api.github.com/repos/${repoOwner}/${repoName}/statuses/${commitSha} \
         -d '{
-            "state": "${status}",
+            "state": "${state}",
             "target_url": "${env.BUILD_URL}",
             "description": "${description}",
             "context": "${context}"
