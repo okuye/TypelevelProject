@@ -1,50 +1,26 @@
 package com.klxsolutions.jobsboard.core
 
-import cats.* 
-import cats.implicits.* 
+import cats.*
+import cats.implicits.*
 import cats.effect.*
-import com.klxsolutions.jobsboard.domain.job.* 
-import doobie.* 
-import doobie.implicits.* 
-import doobie.postgres.implicits.* 
-import doobie.util.* 
+import com.klxsolutions.jobsboard.domain.job.*
+import doobie.*
+import doobie.implicits.*
+import doobie.postgres.implicits.*
+import doobie.util.*
 import java.util.UUID
 import java.{util => ju}
 
-
 trait Jobs [F[_]] {
    def create(ownerEmail: String, jobInfo: JobInfo) : F[UUID]
-   def all(): F[List[Job]]         
+   def all(): F[List[Job]]
    def find(id: UUID) : F[Option[Job]]
    def update(id: UUID, jobInfo: JobInfo) : F[Option[Job]]
    def delete(id: UUID) : F[Int]
   }
 
-  /* 
-  dummy data
-      id: UUID,
-      date: Long,
-      ownerEmail: String,
-      jobInfo: JobInfo,
-      active: Boolean = false
-      company: String,
-      title: String,
-      description: String,
-      externalUrl: String,
-      remote: Boolean,
-      location: String,
-      salaryLo: Option[Int],
-      salaryHi: Option[Int],
-      currency: Option[String],
-      country: Option[String],
-      tags: Option[List[String]],
-      image: Option[String],
-      seniority: Option[String],
-      other: Option[String]
-
-   */
   class LiveJobs[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Jobs[F] {
-     override def create(ownerEmail: String, jobInfo: JobInfo) : F[UUID] = 
+     override def create(ownerEmail: String, jobInfo: JobInfo) : F[UUID] =
       sql"""
       INSERT INTO jobs(
          date,
@@ -80,17 +56,17 @@ trait Jobs [F[_]] {
             ${jobInfo.tags},
             ${jobInfo.image},
             ${jobInfo.seniority},
-            ${jobInfo.other},        
+            ${jobInfo.other},
             false
             )
       """"
       .update
       .withUniqueGeneratedKeys[UUID]("id")
       .transact(xa)
-      
-     override def all(): F[List[Job]] =  
+
+     override def all(): F[List[Job]] =
         sql"""
-          SELECT 
+          SELECT
             id,
             date,
             ownerEmail,
@@ -115,9 +91,9 @@ trait Jobs [F[_]] {
            .to[List]
            .transact(xa)
 
-     override def find(id:  UUID) : F[Option[Job]] = 
+     override def find(id:  UUID) : F[Option[Job]] =
       sql"""
-        SELECT 
+        SELECT
          id,
          ownerEmail,
          date,
@@ -136,14 +112,14 @@ trait Jobs [F[_]] {
          seniority,
          other,
          active
-       FROM jobs 
+       FROM jobs
        WHERE id = $id
-     """ 
+     """
      .query[Job]
      .option
      .transact(xa)
-     
-     override def update(id: UUID, jobInfo: JobInfo) : F[Option[Job]] = 
+
+     override def update(id: UUID, jobInfo: JobInfo) : F[Option[Job]] =
       sql"""
         UPDATE jobs
         SET
@@ -168,7 +144,7 @@ trait Jobs [F[_]] {
       .transact{xa}
       .flatMap(_ => find(id))
 
-     override def delete(id: UUID) : F[Int]= 
+     override def delete(id: UUID) : F[Int]=
       sql"""
         DELETE FROM jobs
         WHERE id = ${id}
@@ -200,7 +176,7 @@ trait Jobs [F[_]] {
        Boolean //  active
      )].map {
         case (
-          id: UUID,              
+          id: UUID,
           date: Long,
           ownerEmail: String,
           company: String,
@@ -241,6 +217,6 @@ trait Jobs [F[_]] {
             active = active
         )
      }
-     
+
      def apply[F[_]: MonadCancelThrow] (xa: Transactor[F]) : F[LiveJobs[F]] = new LiveJobs[F](xa).pure[F]
   }
