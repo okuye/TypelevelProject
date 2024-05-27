@@ -15,7 +15,9 @@ import scala.collection.mutable
 import java.util.UUID
 
 import com.klxsolutions.jobsboard.core.*
+import com.klxsolutions.jobsboard.domain.job.*
 import com.klxsolutions.jobsboard.http.responses.*
+import com.klxsolutions.jobsboard.logging.syntax.*
 import pureconfig.error.FailureReason
 
 class JobRoutes[F[_]: Concurrent: Logger] private (jobs: Jobs[F]) extends Http4sDsl[F] {
@@ -43,7 +45,6 @@ class JobRoutes[F[_]: Concurrent: Logger] private (jobs: Jobs[F]) extends Http4s
       active = true
     ).pure[F]
 
-  import com.klxsolutions.jobsboard.logging.syntax.*
   private val createJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "create" =>
     for {
       jobInfo <- req.as[JobInfo].logError(e => s"Parsing payload failed: $e")
