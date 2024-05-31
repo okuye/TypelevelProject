@@ -23,7 +23,7 @@ pipeline {
                 script {
                     updateGithubStatus('Compile', 'pending', 'Compiling the code...')
                     try {
-                        sh 'make build'
+                        sh 'sbt clean compile'
                         updateGithubStatus('Compile', 'success', 'Compilation successful')
                     } catch (Exception e) {
                         updateGithubStatus('Compile', 'failure', 'Compilation failed')
@@ -37,7 +37,7 @@ pipeline {
                 script {
                     updateGithubStatus('Tests', 'pending', 'Running tests...')
                     try {
-                        sh 'make test'
+                        sh 'sbt test'
                         updateGithubStatus('Tests', 'success', 'Tests passed')
                     } catch (Exception e) {
                         updateGithubStatus('Tests', 'failure', 'Tests failed')
