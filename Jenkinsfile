@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        GITHUB_TOKEN = credentials('github-token') // Reference the stored GitHub token
+        GITHUB_TOKEN = credentials('github-to-jenkins') // Reference the stored GitHub token
     }
     stages {
         stage('Compile') {
