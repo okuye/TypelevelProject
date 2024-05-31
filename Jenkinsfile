@@ -1,13 +1,40 @@
 pipeline {
     agent any
+    environment {
+        GITHUB_TOKEN = credentials('github-token') // Reference the stored GitHub token
+    }
     stages {
         stage('Compile') {
             steps {
+                script {
+                    def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    sh """
+                    curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
+                    https://api.github.com/repos/okuye/TypelevelProject/statuses/${commitSha} -d '{
+                        "state": "pending",
+                        "target_url": "${env.BUILD_URL}",
+                        "description": "Compiling the code...",
+                        "context": "Compile"
+                    }'
+                    """
+                }
                 sh 'make build'
             }
         }
         stage('Run Tests') {
             steps {
+                script {
+                    def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    sh """
+                    curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
+                    https://api.github.com/repos/okuye/TypelevelProject/statuses/${commitSha} -d '{
+                        "state": "pending",
+                        "target_url": "${env.BUILD_URL}",
+                        "description": "Running tests...",
+                        "context": "Run Tests"
+                    }'
+                    """
+                }
                 sh 'make test'
             }
         }
@@ -33,6 +60,16 @@ pipeline {
     post {
         success {
             script {
+                def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                sh """
+                curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
+                https://api.github.com/repos/okuye/TypelevelProject/statuses/${commitSha} -d '{
+                    "state": "success",
+                    "target_url": "${env.BUILD_URL}",
+                    "description": "Build successful",
+                    "context": "Overall"
+                }'
+                """
                 def chat_id = '6840647775'
                 def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
                 def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
@@ -41,6 +78,16 @@ pipeline {
         }
         failure {
             script {
+                def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                sh """
+                curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
+                https://api.github.com/repos/<your-username>/<your-repo>/statuses/${commitSha} -d '{
+                    "state": "failure",
+                    "target_url": "${env.BUILD_URL}",
+                    "description": "Build failed",
+                    "context": "Overall"
+                }'
+                """
                 def chat_id = '6840647775'
                 def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
                 def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
