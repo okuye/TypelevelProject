@@ -21,7 +21,7 @@ pipeline {
         }
         stage('Compile') {
             steps {
-                dir('/project') {
+                dir('project') {
                     script {
                         updateGithubStatus('Compile', 'pending', 'Compiling the code...')
                         try {
@@ -37,7 +37,7 @@ pipeline {
         }
         stage('Run Tests') {
             steps {
-                dir('/project') {
+                dir('project') {
                     script {
                         updateGithubStatus('Tests', 'pending', 'Running tests...')
                         try {
@@ -92,47 +92,4 @@ pipeline {
                     } catch (Exception e) {
                         updateGithubStatus('Deploy to QA', 'failure', 'Deploy to QA failed')
                         throw e
-                    }
-                }
-            }
-        }
-    }
-    post {
-        success {
-            script {
-                updateGithubStatus('Overall', 'success', 'Build and deploy successful')
-                def chat_id = '6840647775'
-                def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
-                def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
-                sh "curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage -d chat_id=${chat_id} -d text='${message}'"
-            }
-        }
-        failure {
-            script {
-                updateGithubStatus('Overall', 'failure', 'Build or deploy failed')
-                def chat_id = '6840647775'
-                def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
-                def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
-                sh "curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage -d chat_id=${chat_id} -d text='${message}'"
-            }
-        }
-    }
-}
-
-def updateGithubStatus(context, state, description) {
-    def repoName = env.GIT_URL.tokenize('/').last().replaceAll(/\.git$/, '')
-    def repoOwner = env.GIT_URL.tokenize('/')[3]
-    def commitSha = env.GIT_COMMIT
-
-    sh """
-        curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/${repoOwner}/${repoName}/statuses/${commitSha} \
-        -d '{
-            "state": "${state}",
-            "target_url": "${env.BUILD_URL}",
-            "description": "${description}",
-            "context": "${context}"
-        }'
-    """
-}
+                    
