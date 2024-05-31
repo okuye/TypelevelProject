@@ -25,7 +25,6 @@ class JobsSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers with DoobieS
 
         program.asserting(_ shouldBe None)
       }
-
     }
 
     "should a job by id" in {
@@ -56,7 +55,7 @@ class JobsSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers with DoobieS
       transactor.use { xa =>
         val program = for {
           jobs <- LiveJobs[IO](xa)
-          jobId <- jobs.create("daniel@rockthejvm.com", RockTheJvmNewJob)
+          jobId <- jobs.create("ola@klxsolutions.co.uk", RockTheJvmNewJob)
           maybeJob <- jobs.find(jobId)
         } yield maybeJob
 

@@ -15,12 +15,15 @@ import scala.collection.mutable
 import java.util.UUID
 
 import com.klxsolutions.jobsboard.core.*
-import com.klxsolutions.jobsboard.domain.job.*
 import com.klxsolutions.jobsboard.http.responses.*
+import com.klxsolutions.jobsboard.http.validation.syntax.*
 import com.klxsolutions.jobsboard.logging.syntax.*
 import pureconfig.error.FailureReason
 
-class JobRoutes[F[_]: Concurrent: Logger] private (jobs: Jobs[F]) extends Http4sDsl[F] {
+class JobRoutes[F[_]: Concurrent: Logger] private (jobs: Jobs[F]) extends HttpValidationsDsl[F] {
+
+  private val dsl = Http4sDsl[F]
+  import dsl.*
 
   private val allJobsRoute: HttpRoutes[F] = HttpRoutes.of[F] { case POST -> Root =>
     for {
@@ -55,7 +58,7 @@ class JobRoutes[F[_]: Concurrent: Logger] private (jobs: Jobs[F]) extends Http4s
 
   private val updateJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ PUT -> Root / UUIDVar(id) =>
     for {
-      jobInfo <- req.as[JobInfo]
+      jobInfo <- req.as[JobInfo].logError(e => s"Parsing payload failed: $e")
       maybeNewJob <- jobs.update(id, jobInfo)
       resp <- maybeNewJob match {
         case Some(job) => Ok()
@@ -75,7 +78,7 @@ class JobRoutes[F[_]: Concurrent: Logger] private (jobs: Jobs[F]) extends Http4s
     }
   }
 
-  val routes = Router(
+  val routes: HttpRoutes[F] = Router(
     "/jobs" -> (allJobsRoute <+> findJobRoute <+> createJobRoute <+> updateJobRoute <+> deleteJobRoute)
   )
 }
