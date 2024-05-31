@@ -2,18 +2,9 @@ pipeline {
     agent any
     environment {
         GITHUB_TOKEN = credentials('github-to-jenkins')  // Use the credentials ID from Jenkins
+        PATH = "/root/.sdkman/candidates/sbt/current/bin:/root/.sdkman/candidates/scala/current/bin:${PATH}"
     }
     stages {
-        stage('Setup') {
-            steps {
-                script {
-                    // Ensure sbt is in the PATH
-                    withEnv(["PATH+EXTRA=/root/.sdkman/candidates/sbt/current/bin:/root/.sdkman/candidates/scala/current/bin"]) {
-                        sh 'sbt sbtVersion'
-                    }
-                }
-            }
-        }
         stage('Checkout') {
             steps {
                 script {
@@ -30,32 +21,32 @@ pipeline {
         }
         stage('Compile') {
             steps {
-                script {
-                    updateGithubStatus('Compile', 'pending', 'Compiling the code...')
-                    try {
-                        withEnv(["PATH+EXTRA=/root/.sdkman/candidates/sbt/current/bin:/root/.sdkman/candidates/scala/current/bin"]) {
+                dir('/project') {
+                    script {
+                        updateGithubStatus('Compile', 'pending', 'Compiling the code...')
+                        try {
                             sh 'sbt clean compile'
+                            updateGithubStatus('Compile', 'success', 'Compilation successful')
+                        } catch (Exception e) {
+                            updateGithubStatus('Compile', 'failure', 'Compilation failed')
+                            throw e
                         }
-                        updateGithubStatus('Compile', 'success', 'Compilation successful')
-                    } catch (Exception e) {
-                        updateGithubStatus('Compile', 'failure', 'Compilation failed')
-                        throw e
                     }
                 }
             }
         }
         stage('Run Tests') {
             steps {
-                script {
-                    updateGithubStatus('Tests', 'pending', 'Running tests...')
-                    try {
-                        withEnv(["PATH+EXTRA=/root/.sdkman/candidates/sbt/current/bin:/root/.sdkman/candidates/scala/current/bin"]) {
+                dir('/project') {
+                    script {
+                        updateGithubStatus('Tests', 'pending', 'Running tests...')
+                        try {
                             sh 'sbt test'
+                            updateGithubStatus('Tests', 'success', 'Tests passed')
+                        } catch (Exception e) {
+                            updateGithubStatus('Tests', 'failure', 'Tests failed')
+                            throw e
                         }
-                        updateGithubStatus('Tests', 'success', 'Tests passed')
-                    } catch (Exception e) {
-                        updateGithubStatus('Tests', 'failure', 'Tests failed')
-                        throw e
                     }
                 }
             }
