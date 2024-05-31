@@ -14,19 +14,26 @@ import org.typelevel.log4cats.Logger
 import scala.collection.mutable
 import java.util.UUID
 
+import com.klxsolutions.jobsboard.core.*
 import com.klxsolutions.jobsboard.http.responses.*
+import com.klxsolutions.jobsboard.http.validation.syntax.*
+import com.klxsolutions.jobsboard.logging.syntax.*
 import pureconfig.error.FailureReason
 
-class JobRoutes[F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
+class JobRoutes[F[_]: Concurrent: Logger] private (jobs: Jobs[F]) extends HttpValidationsDsl[F] {
 
-  private val database = mutable.Map[UUID, Job]()
+  private val dsl = Http4sDsl[F]
+  import dsl.*
 
   private val allJobsRoute: HttpRoutes[F] = HttpRoutes.of[F] { case POST -> Root =>
-    Ok(database.values)
+    for {
+      jobList <- jobs.all()
+      resp <- Ok(jobList)
+    } yield resp
   }
 
   private val findJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root / UUIDVar(id) =>
-    database.get(id) match {
+    jobs.find(id).flatMap {
       case Some(job) => Ok(job)
       case None      => NotFound(FailureResponse(s"Job $id not found."))
     }
@@ -41,47 +48,41 @@ class JobRoutes[F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
       active = true
     ).pure[F]
 
-  import com.klxsolutions.jobsboard.logging.syntax.*
-  private val createJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ POST -> Root / "create" =>
-      for {
-        jobInfo <- req.as[JobInfo].logError(e => s"Parsing payload failed: $e")
-        job     <- createJob(jobInfo)
-        _       <- database.put(job.id, job).pure[F]
-        resp    <- Created(job.id)
-      } yield resp
+  private val createJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "create" =>
+    for {
+      jobInfo <- req.as[JobInfo].logError(e => s"Parsing payload failed: $e")
+      jobId <- jobs.create("TODO@klxsolutions.com", jobInfo)
+      resp <- Created(jobId)
+    } yield resp
   }
 
-  private val updateJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ PUT -> Root / UUIDVar(id) =>
-      database.get(id) match {
-        case Some(job) =>
-          for {
-            jobInfo <- req.as[JobInfo]
-            _       <- database.put(id, job.copy(jobInfo = jobInfo)).pure[F]
-            resp    <- Ok()
-          } yield resp
-        case None => NotFound(FailureResponse(s"Cannot update job $id: not found"))
+  private val updateJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ PUT -> Root / UUIDVar(id) =>
+    for {
+      jobInfo <- req.as[JobInfo].logError(e => s"Parsing payload failed: $e")
+      maybeNewJob <- jobs.update(id, jobInfo)
+      resp <- maybeNewJob match {
+        case Some(job) => Ok()
+        case None      => NotFound(FailureResponse(s"Cannot update job $id: not found"))
       }
+    } yield resp
   }
 
-  private val deleteJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ DELETE -> Root / UUIDVar(id) =>
-      database.get(id) match {
-        case Some(job) =>
-          for {
-            _    <- database.remove(id).pure[F]
-            resp <- Ok()
-          } yield resp
-        case None => NotFound(FailureResponse(s"Cannot delete job $id: not found"))
-      }
+  private val deleteJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ DELETE -> Root / UUIDVar(id) =>
+    jobs.find(id).flatMap {
+      case Some(job) =>
+        for {
+          _ <- jobs.delete(id)
+          resp <- Ok()
+        } yield resp
+      case None => NotFound(FailureResponse(s"Cannot delete job $id: not found"))
+    }
   }
 
-  val routes = Router(
+  val routes: HttpRoutes[F] = Router(
     "/jobs" -> (allJobsRoute <+> findJobRoute <+> createJobRoute <+> updateJobRoute <+> deleteJobRoute)
   )
 }
 
 object JobRoutes {
-  def apply[F[_]: Concurrent: Logger] = new JobRoutes[F]
+  def apply[F[_]: Concurrent: Logger](jobs: Jobs[F]) = new JobRoutes[F](jobs)
 }
