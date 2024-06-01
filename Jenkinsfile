@@ -7,6 +7,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                script {
+                    // Ensure the git tool is defined
+                    def gitTool = tool name: 'Default', type: 'GitTool'
+                    env.GIT_TOOL = gitTool
+                }
                 git url: 'https://github.com/okuye/TypelevelProject.git', credentialsId: 'github-pat'
             }
         }
@@ -40,6 +45,12 @@ pipeline {
         }
     }
     post {
+        always {
+            script {
+                echo "Cleaning up workspace"
+                cleanWs()
+            }
+        }
         success {
             script {
                 def chat_id = '6840647775'
