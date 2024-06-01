@@ -1,9 +1,9 @@
 # Use the latest Ubuntu image
 FROM ubuntu:latest
 
-# Update the package list and install dependencies
+# Update the package list and install dependencies including git
 RUN apt-get update && \
-    apt-get install -y openjdk-11-jdk wget gnupg curl zip unzip && \
+    apt-get install -y openjdk-11-jdk wget gnupg curl zip unzip git && \
     rm -rf /var/lib/apt/lists/*
 
 # Download and set up Jenkins
@@ -12,6 +12,14 @@ RUN ls -al /usr/share/jenkins.war
 
 # Set up Jenkins user and home directory
 RUN useradd -d /var/jenkins_home -m -s /bin/bash jenkins
+
+# Install Jenkins Plugin CLI
+RUN curl -fsSL -o /usr/local/bin/jenkins-plugin-manager-2.13.0.jar https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/2.13.0/jenkins-plugin-manager-2.13.0.jar && \
+    mv /usr/local/bin/jenkins-plugin-manager-2.13.0.jar /usr/local/bin/jenkins-plugin-cli && \
+    chmod +x /usr/local/bin/jenkins-plugin-cli
+
+# Install Jenkins plugins
+RUN java -jar /usr/local/bin/jenkins-plugin-cli --plugins git:5.2.2
 
 # Switch to Jenkins user
 USER jenkins
