@@ -41,13 +41,13 @@ pipeline {
     }
     post {
         always {
-            node {
+            node('any') {
                 echo 'Cleaning up workspace'
                 cleanWs()
             }
         }
         success {
-            node {
+            node('any') {
                 script {
                     def chat_id = '6840647775'
                     def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
@@ -56,7 +56,7 @@ pipeline {
             }
         }
         failure {
-            node {
+            node('any') {
                 script {
                     def chat_id = '6840647775'
                     def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
