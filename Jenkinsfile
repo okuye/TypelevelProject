@@ -8,7 +8,11 @@ pipeline {
         }
         stage('Run Tests') {
             steps {
-                sh 'make test'
+                script {
+                    docker.image('testcontainers/ryuk:0.3.1').inside('--privileged') {
+                        sh 'make test'
+                    }
+                }
             }
         }
         stage('Deploy to Dev') {
