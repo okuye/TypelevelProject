@@ -40,13 +40,8 @@ pipeline {
         }
     }
     post {
-        always {
-            node {
-                cleanWs()
-            }
-        }
         success {
-            node {
+            node('any') {
                 script {
                     def chat_id = '6840647775'
                     def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
@@ -55,12 +50,17 @@ pipeline {
             }
         }
         failure {
-            node {
+            node('any') {
                 script {
                     def chat_id = '6840647775'
                     def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
                     sh "curl -s -X POST https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${chat_id} -d text='${message}'"
                 }
+            }
+        }
+        always {
+            node('any') {
+                cleanWs()
             }
         }
     }
