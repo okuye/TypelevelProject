@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'main' }
     environment {
         GITHUB_TOKEN = credentials('github-pat')
         TELEGRAM_BOT_TOKEN = credentials('telegram-bot-token')
@@ -41,7 +41,7 @@ pipeline {
     }
     post {
         success {
-            node('any') {
+            node('main') {
                 script {
                     def chat_id = '6840647775'
                     def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
@@ -50,7 +50,7 @@ pipeline {
             }
         }
         failure {
-            node('any') {
+            node('main') {
                 script {
                     def chat_id = '6840647775'
                     def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
@@ -59,7 +59,7 @@ pipeline {
             }
         }
         always {
-            node('any') {
+            node('main') {
                 cleanWs()
             }
         }
