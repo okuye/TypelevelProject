@@ -11,6 +11,11 @@ pipeline {
                 script {
                     sh '''
                         mkdir -p $TMPDIR $WORKSPACE/.sbt/boot $WORKSPACE/.sbt/global
+                        if ! docker --version &>/dev/null; then
+                            echo "Docker not found, installing Docker..."
+                            curl -fsSL https://get.docker.com | sh
+                            sudo usermod -aG docker $USER
+                        fi
                     '''
                 }
             }
