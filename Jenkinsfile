@@ -147,7 +147,7 @@
 pipeline {
     agent { label 'main' }
     environment {
-        GITHUB_TOKEN = credentials('github-to-jenkins')  // Use the credentials ID from Jenkins
+        GITHUB_TOKEN = credentials('github-pat')  // Use the credentials ID from Jenkins
     }
     stages {
         stage('Checkout') {
