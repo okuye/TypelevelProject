@@ -3,12 +3,13 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('github-pat')  // Use the credentials ID from Jenkins
         TMPDIR = "${env.WORKSPACE}/tmp"
+        SBT_OPTS = "-Dsbt.boot.directory=${env.WORKSPACE}/.sbt/boot -Dsbt.global.base=${env.WORKSPACE}/.sbt/global"
     }
     stages {
         stage('Prepare Environment') {
             steps {
                 script {
-                    sh 'mkdir -p ${TMPDIR}'
+                    sh 'mkdir -p ${TMPDIR} ${env.WORKSPACE}/.sbt/boot ${env.WORKSPACE}/.sbt/global'
                 }
             }
         }
