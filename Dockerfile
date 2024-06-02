@@ -1,9 +1,9 @@
 # Use the latest Ubuntu image
 FROM ubuntu:latest
 
-# Update the package list and install dependencies including git
+# Update the package list and install dependencies including git and make
 RUN apt-get update && \
-    apt-get install -y openjdk-11-jdk wget gnupg curl zip unzip git && \
+    apt-get install -y openjdk-11-jdk wget gnupg curl zip unzip git make && \
     rm -rf /var/lib/apt/lists/*
 
 # Download and set up Jenkins
