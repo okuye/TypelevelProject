@@ -1,18 +1,14 @@
 pipeline {
     agent any
     stages {
-        stage('Compile') {
+        stage('Checkout') {
             steps {
-                sh 'make build'
+                checkout scm
             }
         }
-        stage('Run Tests') {
+        stage('Build and Test') {
             steps {
-                script {
-                    docker.image('testcontainers/ryuk:0.3.1').inside('--privileged') {
-                        sh 'make test'
-                    }
-                }
+                sh 'sbt clean compile test'
             }
         }
         stage('Deploy to Dev') {

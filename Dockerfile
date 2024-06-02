@@ -7,8 +7,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Download and set up Jenkins
-RUN wget -q -O /usr/share/jenkins.war https://get.jenkins.io/war-stable/2.387.2/jenkins.war && \
-    ls -al /usr/share/jenkins.war && \
+RUN wget -O /usr/share/jenkins.war https://get.jenkins.io/war-stable/2.387.2/jenkins.war || \
+    { echo "Failed to download Jenkins war file. Exiting."; exit 1; }
+
+# Check if the file was downloaded successfully
+RUN ls -al /usr/share/jenkins.war && \
     echo "Downloaded Jenkins war file successfully"
 
 # Set up Jenkins user and home directory
