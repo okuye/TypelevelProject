@@ -1,7 +1,7 @@
 pipeline {
     agent { label 'main' }
     environment {
-        GITHUB_TOKEN = credentials('github-to-jenkins')  // Use the credentials ID from Jenkins
+        GITHUB_TOKEN = credentials('github-pat')  // Use the credentials ID from Jenkins
     }
     stages {
         stage('Checkout') {
@@ -112,25 +112,35 @@ pipeline {
             }
         }
         always {
-            cleanWs()
+            script {
+                try {
+                    cleanWs()
+                } catch (Exception e) {
+                    echo "Workspace cleanup failed: ${e.message}"
+                }
+            }
         }
     }
 }
 
 def updateGithubStatus(context, state, description) {
-    def repoName = env.GIT_URL.tokenize('/').last().replaceAll(/\.git$/, '')
-    def repoOwner = env.GIT_URL.tokenize('/')[3]
+    def repoName = env.GIT_URL?.tokenize('/')?.last()?.replaceAll(/\.git$/, '')
+    def repoOwner = env.GIT_URL?.tokenize('/')?.getAt(3)
     def commitSha = env.GIT_COMMIT
 
-    sh """
-        curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/${repoOwner}/${repoName}/statuses/${commitSha} \
-        -d '{
-            "state": "${state}",
-            "target_url": "${env.BUILD_URL}",
-            "description": "${description}",
-            "context": "${context}"
-        }'
-    """
+    if (repoName && repoOwner) {
+        sh """
+            curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${repoOwner}/${repoName}/statuses/${commitSha} \
+            -d '{
+                "state": "${state}",
+                "target_url": "${env.BUILD_URL}",
+                "description": "${description}",
+                "context": "${context}"
+            }'
+        """
+    } else {
+        echo "GitHub repository information is not available. Skipping GitHub status update."
+    }
 }
