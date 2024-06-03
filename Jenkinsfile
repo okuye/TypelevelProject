@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        GITHUB_TOKEN = credentials('github-to-jenkins')  // Use the credentials ID from Jenkins
+        GITHUB_TOKEN = credentials('github-token')  // Ensure the ID matches the credentials ID
     }
     stages {
         stage('Checkout') {
@@ -144,3 +144,4 @@ def updateGithubStatus(context, state, description) {
         }'
     """
 }
+
