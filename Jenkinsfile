@@ -105,7 +105,7 @@ pipeline {
             }
         }
     }
-  post {
+    post {
         success {
             script {
                 updateGithubStatus('Overall', 'success', 'Build and deploy successful')
