@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        GITHUB_TOKEN = credentials('github-token')  // Ensure the ID matches the credentials ID
+        GITHUB_TOKEN = credentials('github-token')  // Ensure this matches the ID of your credentials
     }
     stages {
         stage('Checkout') {
@@ -105,12 +105,12 @@ pipeline {
             }
         }
     }
-    post {
+  post {
         success {
             script {
                 updateGithubStatus('Overall', 'success', 'Build and deploy successful')
-                def chat_id = '6840647775'
-                def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
+                def chat_id = 'your-chat-id'
+                def bot_token = 'your-telegram-bot-token'
                 def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
                 sh "curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage -d chat_id=${chat_id} -d text='${message}'"
             }
@@ -118,8 +118,8 @@ pipeline {
         failure {
             script {
                 updateGithubStatus('Overall', 'failure', 'Build or deploy failed')
-                def chat_id = '6840647775'
-                def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
+                def chat_id = 'your-chat-id'
+                def bot_token = 'your-telegram-bot-token'
                 def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
                 sh "curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage -d chat_id=${chat_id} -d text='${message}'"
             }
@@ -144,4 +144,3 @@ def updateGithubStatus(context, state, description) {
         }'
     """
 }
-
