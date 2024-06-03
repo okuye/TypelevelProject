@@ -12,24 +12,36 @@ pipeline {
             }
         }
         stage('Deploy to Dev') {
+            when {
+                branch 'main'
+            }
             steps {
                 sh 'chmod +x deploy.sh'
                 sh './deploy.sh dev'
             }
         }
         stage('Deploy to Staging') {
+            when {
+                branch 'staging'
+            }
             steps {
                 sh 'chmod +x deploy.sh'
                 sh './deploy.sh staging'
             }
         }
         stage('Deploy to QA') {
+            when {
+                branch 'qa'
+            }
             steps {
                 sh 'chmod +x deploy.sh'
                 sh './deploy.sh qa'
             }
         }
         stage('Deploy to Production') {
+            when {
+                branch 'production'
+            }
             steps {
                 sh 'chmod +x deploy.sh'
                 sh './deploy.sh production'
