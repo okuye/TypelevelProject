@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        GITHUB_TOKEN = credentials('github-to-jenkins')  // Use the credentials ID from Jenkins
+        GITHUB_TOKEN = credentials('github-token')  // Ensure this matches the ID of your credentials
     }
     stages {
         stage('Checkout') {
@@ -18,35 +18,24 @@ pipeline {
                 }
             }
         }
-        stage('Compile') {
+        stage('Build and Test') {
             steps {
                 script {
-                    updateGithubStatus('Compile', 'pending', 'Compiling the code...')
+                    updateGithubStatus('Build and Test', 'pending', 'Building and testing...')
                     try {
-                        sh 'make build'
-                        updateGithubStatus('Compile', 'success', 'Compilation successful')
+                        sh 'sbt clean compile test'
+                        updateGithubStatus('Build and Test', 'success', 'Build and tests successful')
                     } catch (Exception e) {
-                        updateGithubStatus('Compile', 'failure', 'Compilation failed')
-                        throw e
-                    }
-                }
-            }
-        }
-        stage('Run Tests') {
-            steps {
-                script {
-                    updateGithubStatus('Tests', 'pending', 'Running tests...')
-                    try {
-                        sh 'make test'
-                        updateGithubStatus('Tests', 'success', 'Tests passed')
-                    } catch (Exception e) {
-                        updateGithubStatus('Tests', 'failure', 'Tests failed')
+                        updateGithubStatus('Build and Test', 'failure', 'Build or tests failed')
                         throw e
                     }
                 }
             }
         }
         stage('Deploy to Dev') {
+            when {
+                branch 'main'
+            }
             steps {
                 script {
                     updateGithubStatus('Deploy to Dev', 'pending', 'Deploying to dev...')
@@ -62,6 +51,9 @@ pipeline {
             }
         }
         stage('Deploy to Staging') {
+            when {
+                branch 'staging'
+            }
             steps {
                 script {
                     updateGithubStatus('Deploy to Staging', 'pending', 'Deploying to staging...')
@@ -77,6 +69,9 @@ pipeline {
             }
         }
         stage('Deploy to QA') {
+            when {
+                branch 'qa'
+            }
             steps {
                 script {
                     updateGithubStatus('Deploy to QA', 'pending', 'Deploying to QA...')
@@ -91,13 +86,31 @@ pipeline {
                 }
             }
         }
+        stage('Deploy to Production') {
+            when {
+                branch 'production'
+            }
+            steps {
+                script {
+                    updateGithubStatus('Deploy to Production', 'pending', 'Deploying to production...')
+                    try {
+                        sh 'chmod +x deploy.sh'
+                        sh './deploy.sh production'
+                        updateGithubStatus('Deploy to Production', 'success', 'Deployed to production')
+                    } catch (Exception e) {
+                        updateGithubStatus('Deploy to Production', 'failure', 'Deploy to production failed')
+                        throw e
+                    }
+                }
+            }
+        }
     }
-    post {
+  post {
         success {
             script {
                 updateGithubStatus('Overall', 'success', 'Build and deploy successful')
-                def chat_id = '6840647775'
-                def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
+                def chat_id = 'your-chat-id'
+                def bot_token = 'your-telegram-bot-token'
                 def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
                 sh "curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage -d chat_id=${chat_id} -d text='${message}'"
             }
@@ -105,8 +118,8 @@ pipeline {
         failure {
             script {
                 updateGithubStatus('Overall', 'failure', 'Build or deploy failed')
-                def chat_id = '6840647775'
-                def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
+                def chat_id = 'your-chat-id'
+                def bot_token = 'your-telegram-bot-token'
                 def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
                 sh "curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage -d chat_id=${chat_id} -d text='${message}'"
             }
