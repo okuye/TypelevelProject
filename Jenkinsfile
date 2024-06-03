@@ -1,14 +1,35 @@
 pipeline {
     agent any
+    environment {
+        GITHUB_TOKEN = credentials('github-to-jenkins')  // Use the credentials ID from Jenkins
+    }
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                script {
+                    updateGithubStatus('Checkout', 'pending', 'Checking out the code...')
+                    try {
+                        checkout scm
+                        updateGithubStatus('Checkout', 'success', 'Code checked out successfully')
+                    } catch (Exception e) {
+                        updateGithubStatus('Checkout', 'failure', 'Checkout failed')
+                        throw e
+                    }
+                }
             }
         }
         stage('Build and Test') {
             steps {
-                sh 'sbt clean compile test'
+                script {
+                    updateGithubStatus('Build and Test', 'pending', 'Building and testing...')
+                    try {
+                        sh 'sbt clean compile test'
+                        updateGithubStatus('Build and Test', 'success', 'Build and tests successful')
+                    } catch (Exception e) {
+                        updateGithubStatus('Build and Test', 'failure', 'Build or tests failed')
+                        throw e
+                    }
+                }
             }
         }
         stage('Deploy to Dev') {
@@ -16,8 +37,17 @@ pipeline {
                 branch 'main'
             }
             steps {
-                sh 'chmod +x deploy.sh'
-                sh './deploy.sh dev'
+                script {
+                    updateGithubStatus('Deploy to Dev', 'pending', 'Deploying to dev...')
+                    try {
+                        sh 'chmod +x deploy.sh'
+                        sh './deploy.sh dev'
+                        updateGithubStatus('Deploy to Dev', 'success', 'Deployed to dev')
+                    } catch (Exception e) {
+                        updateGithubStatus('Deploy to Dev', 'failure', 'Deploy to dev failed')
+                        throw e
+                    }
+                }
             }
         }
         stage('Deploy to Staging') {
@@ -25,8 +55,17 @@ pipeline {
                 branch 'staging'
             }
             steps {
-                sh 'chmod +x deploy.sh'
-                sh './deploy.sh staging'
+                script {
+                    updateGithubStatus('Deploy to Staging', 'pending', 'Deploying to staging...')
+                    try {
+                        sh 'chmod +x deploy.sh'
+                        sh './deploy.sh staging'
+                        updateGithubStatus('Deploy to Staging', 'success', 'Deployed to staging')
+                    } catch (Exception e) {
+                        updateGithubStatus('Deploy to Staging', 'failure', 'Deploy to staging failed')
+                        throw e
+                    }
+                }
             }
         }
         stage('Deploy to QA') {
@@ -34,8 +73,17 @@ pipeline {
                 branch 'qa'
             }
             steps {
-                sh 'chmod +x deploy.sh'
-                sh './deploy.sh qa'
+                script {
+                    updateGithubStatus('Deploy to QA', 'pending', 'Deploying to QA...')
+                    try {
+                        sh 'chmod +x deploy.sh'
+                        sh './deploy.sh qa'
+                        updateGithubStatus('Deploy to QA', 'success', 'Deployed to QA')
+                    } catch (Exception e) {
+                        updateGithubStatus('Deploy to QA', 'failure', 'Deploy to QA failed')
+                        throw e
+                    }
+                }
             }
         }
         stage('Deploy to Production') {
@@ -43,14 +91,24 @@ pipeline {
                 branch 'production'
             }
             steps {
-                sh 'chmod +x deploy.sh'
-                sh './deploy.sh production'
+                script {
+                    updateGithubStatus('Deploy to Production', 'pending', 'Deploying to production...')
+                    try {
+                        sh 'chmod +x deploy.sh'
+                        sh './deploy.sh production'
+                        updateGithubStatus('Deploy to Production', 'success', 'Deployed to production')
+                    } catch (Exception e) {
+                        updateGithubStatus('Deploy to Production', 'failure', 'Deploy to production failed')
+                        throw e
+                    }
+                }
             }
         }
     }
     post {
         success {
             script {
+                updateGithubStatus('Overall', 'success', 'Build and deploy successful')
                 def chat_id = '6840647775'
                 def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
                 def message = "Build Successful: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
@@ -59,6 +117,7 @@ pipeline {
         }
         failure {
             script {
+                updateGithubStatus('Overall', 'failure', 'Build or deploy failed')
                 def chat_id = '6840647775'
                 def bot_token = '7031490653:AAGd5TQsjcWzgBXMs3TKF9ozxjXhnCz7LoM'
                 def message = "Build Failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
@@ -66,4 +125,22 @@ pipeline {
             }
         }
     }
+}
+
+def updateGithubStatus(context, state, description) {
+    def repoName = env.GIT_URL.tokenize('/').last().replaceAll(/\.git$/, '')
+    def repoOwner = env.GIT_URL.tokenize('/')[3]
+    def commitSha = env.GIT_COMMIT
+
+    sh """
+        curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+        -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/${repoOwner}/${repoName}/statuses/${commitSha} \
+        -d '{
+            "state": "${state}",
+            "target_url": "${env.BUILD_URL}",
+            "description": "${description}",
+            "context": "${context}"
+        }'
+    """
 }
